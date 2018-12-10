@@ -12,14 +12,26 @@
 
     var Jsonp = {
         //调用方法
-        get: function (url, data, callback) {
-            this.createJsonp(url, data,callback);
+        get: function (url, data, callBackName ,callback) {
+            this._createJsonp(url, data, callBackName, callback);
         },
-        //动态添加<script> 标签并组建请求url callback为跨域请求成功后回调函数
-        createJsonp: function(url, data, callback) {
+        //创建回调函数名
+        _createCallBackFun(){
             var radom = Math.random() * 100;
             var number = parseInt(radom); //随机数字
-            var callBackRadom = "jsonpSuccess_" + number; //指定回调函数
+            return "jsonpSuccess_" + number; //指定回调函数
+        },   
+        //成功后移除动态加载的<script>标签
+        _removeJsonp: function (id) {
+            var head = document.getElementsByTagName('head')[0];
+            var el = document.getElementById(id);
+            if (head != null && el != null) {
+                head.removeChild(el);
+            }
+        },
+        //动态添加<script> 标签并组建请求url callback为跨域请求成功后回调函数
+        _createJsonp: function(url, data, callBackName, callback) {
+            var callBackRadom = this._createCallBackFun();
             window[callBackRadom] = callback;
             var query = []; 
             for (var key in data) {
@@ -29,22 +41,14 @@
             var script = document.createElement("script");
             script.type = "text/javascript";
             if (param != null && param.length > 0) {
-                script.src = url + "" + param + "&callback=" + callBackRadom;
+                script.src = url + "" + param + "&"+ callBackName +"=" + callBackRadom;
             }
             else {
-                script.src = url + "?callback=" + callBackRadom;
+                script.src = url + "?"+ callBackName +"=" + callBackRadom;
             }
-            script.id = callBackRadom; //指定id 是为了removeJsonp中动态去除<script>标签
+            script.id = callBackRadom; //指定id 是为了_removeJsonp中动态去除<script>标签
             document.getElementsByTagName('head')[0].appendChild(script);
-            this.removeJsonp(callBackRadom);
-        },
-        //成功后移除动态加载的<script>标签
-        removeJsonp: function (id) {
-            var head = document.getElementsByTagName('head')[0];
-            var el = document.getElementById(id);
-            if (head != null && el != null) {
-                head.removeChild(el);
-            }
+            this._removeJsonp(callBackRadom);
         }
     }
 
